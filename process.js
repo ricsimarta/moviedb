@@ -7,7 +7,6 @@ const movieDB = {
 	genres: []
 }
 
-//write you code after this line
 const findProfessionalId = (professionalsArray, name) => {
 	const foundProfessional = professionalsArray.find(professional => professional.name === name);
 
@@ -30,21 +29,19 @@ const replaceNamesToId = (movie, professionalsArray) => {
 const handleProfessionals = (movie, type, professionalsArray) => {
 	const role = type.slice(0, -1);
 
-	movie[type].forEach(professional => {
+	movie[type].forEach(profName => {
 		const newProfessional = {
 			id: professionalsArray.length > 0 ? professionalsArray[professionalsArray.length - 1].id + 1 : 1,
-			name: professional,
+			name: profName,
 			roles: [role]
 		}
 
-		const foundProfessional = professionalsArray.find(prof => prof.name === newProfessional.name);
+		const foundProfessional = professionalsArray.find(professional => professional.name === newProfessional.name);
 
-		// if (foundProfessional === undefined) {
-		if (!foundProfessional) { // !falsy -> true
+		if (!foundProfessional) { 
 			professionalsArray.push(newProfessional);
 		} else {
-			// if (foundProfessional.roles.includes(role) === false) {
-			if (!foundProfessional.roles.includes(role)) { // !falsy -> true 
+			if (!foundProfessional.roles.includes(role)) { 
 				foundProfessional.roles.push(role);
 			}
 		}
@@ -60,23 +57,27 @@ const addProfessionals = (movie, professionalsArray) => {
 	["writers", "directors", "actors"].forEach(type => handleProfessionals(movie, type, professionalsArray));
 }
 
+const addGenres = (movie, genresArray) => {
+	movie.genres.forEach(genreName => {
+		genresArray.find(genre => genre.name === genreName) ? null : genresArray.push({ id: uuidv4(), name: genreName });
+	})
+}
+
 const addMovieDBData = (movie, movieDB) => {
 	addProfessionals(movie, movieDB.professionals);
 	addMovie(movie, movieDB.movies, movieDB.professionals);
+	addGenres(movie, movieDB.genres);
 }
 
 fs.readFile("data.json", "utf8", (err, dataString) => {
 	if (err) {
 		console.log("error: ", err);
 		return;
-	}
+	}	
 
 	const { movies } = JSON.parse(dataString);
 
 	movies.forEach(movie => addMovieDBData(movie, movieDB));
 })
-
-
-//write your code brefore this line
 
 export { movieDB };
