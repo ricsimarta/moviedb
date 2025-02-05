@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import { v4 as uuidv4 } from 'uuid';
 
 const movieDB = {
 	professionals: [],
@@ -18,7 +19,7 @@ const findProfessionalId = (professionalsArray, name) => {
 }
 
 const replaceNamesToId = (movie, professionalsArray) => {
-	const newMovie = { ...movie };
+	const newMovie = { ...movie, id: uuidv4() };
 	const types = ["actors", "directors", "writers"];
 
 	types.forEach(type => newMovie[type] = newMovie[type].map(professional => findProfessionalId(professionalsArray, professional)));
@@ -59,6 +60,11 @@ const addProfessionals = (movie, professionalsArray) => {
 	["writers", "directors", "actors"].forEach(type => handleProfessionals(movie, type, professionalsArray));
 }
 
+const addMovieDBData = (movie, movieDB) => {
+	addProfessionals(movie, movieDB.professionals);
+	addMovie(movie, movieDB.movies, movieDB.professionals);
+}
+
 fs.readFile("data.json", "utf8", (err, dataString) => {
 	if (err) {
 		console.log("error: ", err);
@@ -67,10 +73,7 @@ fs.readFile("data.json", "utf8", (err, dataString) => {
 
 	const { movies } = JSON.parse(dataString);
 
-	movies.forEach(movie => {
-		addProfessionals(movie, professionalsArray);
-		addMovie(movie, movieDB.movies, movieDB.professionals);
-	})
+	movies.forEach(movie => addMovieDBData(movie, movieDB));
 })
 
 
