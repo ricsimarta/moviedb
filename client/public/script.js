@@ -1,6 +1,6 @@
 import { data } from '/data.js';
 
-const create = (rootElement, component) => rootElement.insertAdjacentHTML("beforeend", component());
+const create = (rootElement, componentFn) => rootElement.insertAdjacentHTML("beforeend", componentFn());
 
 const header = () => `
   <header>
@@ -53,14 +53,14 @@ const movies = (moviesArray) => `
   <div class="movies">
     ${moviesArray.map(movie).join("")}
   </div>
-  `;
+`;
 //${moviesArray.map(moveData => movie(movieData)).join("")}
 
 const movie = (movieData) => `
   <div class="movie">
-    <h3 class="title">${movieData.title}</h3>
+    <a href="/movie/${movieData.id}"><h3 class="title">${movieData.title}</h3></a>
     <h4 class="year">${movieData.year}</h3>
-    <p class="date">${movieData.releaseDate}</p>
+    <p class="date">${movieData["release-date"]}</p>
     <p class="runtime">${movieData.runtime}</p>
     <p class="storyline">${movieData.storyline}</p>
     
@@ -98,22 +98,30 @@ const professional = (profData) => `
 
 const loadEvent = function () {
   const page = window.location.pathname.substring(1);
-  console.log(window.location)
 
   console.log("data: ", data);
 
   const rootElement = document.getElementById("root");
+  const moviesDb = updateMovies(data.movies, data.professionals);
+
   create(rootElement, header);
 
   const profTypes = ['writers', 'actors', 'directors'];
 
   if (page === 'movies') {
-    create(rootElement, () => movies(updateMovies(data.movies, data.professionals)));
+    create(rootElement, () => movies(moviesDb));
   } else if (profTypes.includes(page)) {
     create(rootElement, () => professionals(page, data.professionals));
-  }  else if (page === 'genres') {
+  } else if (page === 'genres') {
     console.log("genres component");
-  } 
+  } else if (page.startsWith('movie/')) {
+    const movieId = page.split("/")[1];
+
+    const foundMovie = moviesDb.find(movie => movie.id === movieId);
+
+    if (foundMovie) create(rootElement, () => movie(foundMovie));
+    else create(rootElement, () => `<h1>404 movie not found</h1>`);
+  }
 }
 
 window.addEventListener("load", loadEvent);
