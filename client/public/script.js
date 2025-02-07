@@ -1,5 +1,7 @@
 import { data } from '/data.js';
 
+const create = (rootElement, component) => rootElement.insertAdjacentHTML("beforeend", component());
+
 const header = () => `
   <header>
     <ul>
@@ -26,62 +28,33 @@ const header = () => `
   </header>
 `;
 
-/* 
-{
-      "actors": [
-        "Paul Walker",
-        "Tyrese Gibson",
-        "Chris Ludacris Bridges",
-        "Eva Mendes",
-        "Cole Hauser"
-      ],
-      "directors": [
-        "John Singleton"
-      ]
-      },
-      */
-
 const getProfessionalName = (id, professionalsArray) => professionalsArray.find(prof => prof.id === id).name;
 
 const changeIdsToNames = (idsArray, professionalsArray) => idsArray.map(id => getProfessionalName(id, professionalsArray));
 
 const profNames = (writers, actors, directors, professionalsArray) => {
-  const writersNames = changeIdsToNames(writers, professionalsArray);
-  const actorsNames = changeIdsToNames(actors, professionalsArray);
-  const directorsNames = changeIdsToNames(directors, professionalsArray);
-
   return {
-    writers: writersNames,
-    actors: actorsNames,
-    directors: directorsNames
+    writers: changeIdsToNames(writers, professionalsArray),
+    actors: changeIdsToNames(actors, professionalsArray),
+    directors: changeIdsToNames(directors, professionalsArray)
   }
 }
 
-const reduceProfNames = (profsObj, professionalsArray) => ["writers", "actors", "directors"].reduce((accumulator, profType) => ({...accumulator, [profType]: changeIdsToNames(profsObj[profType], professionalsArray)}), {});
+// const reduceProfNames = (profsObj, professionalsArray) => ["writers", "actors", "directors"].reduce((accumulator, profType) => ({...accumulator, [profType]: changeIdsToNames(profsObj[profType], professionalsArray)}), {});
 
 
-const updateMovies = (moviesArray, professionalsArray) => {
-  return moviesArray.map(movie => {
-    // const names = profNames(movie.writers, movie.actors, movie.directors, professionalsArray);
-    const names = reduceProfNames({
-      writers: movie.writers,
-      directors: movie.directors,
-      actors: movie.actors
-    }, professionalsArray);
-
-    return {
-      ...movie,
-      ...names
-    }
-  })
-}
+const updateMovies = (moviesArray, professionalsArray) => moviesArray.map(movie => ({
+  ...movie,
+  ...profNames(movie.writers, movie.actors, movie.directors, professionalsArray)
+}));
 
 const movies = (moviesArray) => `
   <h2>Favorite Movies</h2>
   <div class="movies">
-    ${moviesArray.map(movieData => movie(movieData)).join("")}
+    ${moviesArray.map(movie).join("")}
   </div>
-`;
+  `;
+//${moviesArray.map(moveData => movie(movieData)).join("")}
 
 const movie = (movieData) => `
   <div class="movie">
@@ -91,49 +64,56 @@ const movie = (movieData) => `
     <p class="runtime">${movieData.runtime}</p>
     <p class="storyline">${movieData.storyline}</p>
     
-    <h5>Genres:</h5>
-    <ul class="genres">
-      ${movieData.genres.map(genre => `<li>${genre}</li>`).join("")}
-    </ul>
-
-    <h5>Writers:</h5>
-    <ul class="writers">
-      ${movieData.writers.map(writer => `<li>${writer}</li>`).join("")}
-    </ul>
-
-    <h5>Actors:</h5>
-    <ul class="actors">
-      ${movieData.actors.map(actor => `<li>${actor}</li>`).join("")}
-    </ul>
+    ${list("genres", movieData.genres)}
+    ${list("writers", movieData.writers)}
+    ${list("actors", movieData.actors)}
+    ${list("directors", movieData.directors)}
   </div>
 `;
 
+const list = (name, array) => `
+  <h5>${name}:</h5>
+  <ul class=${name}>
+    ${array.map(element => `<li>${element}</li>`).join("")}
+  </ul>
+`;
+
+const professionals = (type, professionalsArray) => `
+  <h2>${type}</h2>
+  <div class=${type}>
+    ${professionalsArray
+        .filter(profData => profData.roles.includes(type.slice(0, -1)))
+        .map(profData => professional(profData))
+        .join("")
+    }
+  </div>
+`;
+
+const professional = (profData) => `
+    <div class="professional">
+      <h3>${profData.name}</h3>
+      ${list("roles", profData.roles)}
+    </div>
+`;
 
 const loadEvent = function () {
-
   const page = window.location.pathname.substring(1);
   console.log(window.location)
-  // Write your JavaScript code after this line
 
   console.log("data: ", data);
-  console.log("page: ", page);
 
   const rootElement = document.getElementById("root");
-  rootElement.insertAdjacentHTML("beforeend", header());
+  create(rootElement, header);
+
+  const profTypes = ['writers', 'actors', 'directors'];
 
   if (page === 'movies') {
-    console.log("movies component");
-    rootElement.insertAdjacentHTML("beforeend", movies(updateMovies(data.movies, data.professionals)));
-  } else if (page === 'writers') {
-    console.log("writers component");
-  } else if (page === 'genres') {
+    create(rootElement, () => movies(updateMovies(data.movies, data.professionals)));
+  } else if (profTypes.includes(page)) {
+    create(rootElement, () => professionals(page, data.professionals));
+  }  else if (page === 'genres') {
     console.log("genres component");
-  } else if (page === 'actors') {
-    console.log("actors component");
-  }
-
-  // Write your JavaScript code before this line
-
+  } 
 }
 
 window.addEventListener("load", loadEvent);
